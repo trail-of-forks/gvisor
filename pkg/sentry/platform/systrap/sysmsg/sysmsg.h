@@ -100,6 +100,10 @@ struct thread_context {
   uint64_t tls;
   uint64_t debug;
   uint64_t err;
+  // is_traced is set to 1 if the task has a ptrace tracer attached, 0 otherwise.
+  // When set, syscall patching is disabled for this task to ensure compatibility
+  // with ptrace-based debuggers like gdb/lldb. See GitHub issues #12266 and #11649.
+  uint32_t is_traced;
 };
 
 enum stub_error {

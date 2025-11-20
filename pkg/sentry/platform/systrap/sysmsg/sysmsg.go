@@ -278,6 +278,10 @@ type ThreadContext struct {
 	Debug uint64
 	// SigError is an error code that clarifies the nature of the signal.
 	SigError uint64
+	// IsTraced is set to 1 if the task has a ptrace tracer attached, 0 otherwise.
+	// When set, syscall patching is disabled for this task to ensure compatibility
+	// with ptrace-based debuggers like gdb/lldb. See GitHub issues #12266 and #11649.
+	IsTraced uint32
 }
 
 // StubError are values that represent known stub-thread failure modes.

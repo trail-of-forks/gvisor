@@ -53,6 +53,7 @@ import (
 	"os"
 	"runtime"
 	"sync"
+	"sync/atomic"
 
 	"golang.org/x/sys/unix"
 	"gvisor.dev/gvisor/pkg/abi/linux"
@@ -61,6 +62,7 @@ import (
 	"gvisor.dev/gvisor/pkg/hostarch"
 	"gvisor.dev/gvisor/pkg/memutil"
 	"gvisor.dev/gvisor/pkg/sentry/arch"
+	"gvisor.dev/gvisor/pkg/sentry/kernel"
 	"gvisor.dev/gvisor/pkg/sentry/pgalloc"
 	"gvisor.dev/gvisor/pkg/sentry/platform"
 	"gvisor.dev/gvisor/pkg/sentry/platform/interrupt"
@@ -171,6 +173,17 @@ func (c *platformContext) Switch(ctx pkgcontext.Context, mm platform.MemoryManag
 	s := as.(*subprocess)
 	if err := s.activateContext(c); err != nil {
 		return nil, hostarch.NoAccess, err
+	}
+
+	// Update the traced status in shared memory so the stub can check it.
+	// This allows the stub to skip syscall patching for tasks being debugged
+	// with ptrace-based debuggers like gdb/lldb. See GitHub issues #12266 and #11649.
+	if task := kernel.TaskFromContext(ctx); task != nil {
+		if task.HasTracer() {
+			atomic.StoreUint32(&c.sharedContext.shared.IsTraced, 1)
+		} else {
+			atomic.StoreUint32(&c.sharedContext.shared.IsTraced, 0)
+		}
 	}
 
 restart:

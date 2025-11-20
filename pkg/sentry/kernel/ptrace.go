@@ -328,6 +328,12 @@ func (t *Task) hasTracer() bool {
 	return t.Tracer() != nil
 }
 
+// HasTracer returns true if t has a ptrace tracer attached.
+// This is the exported version of hasTracer for use by other packages.
+func (t *Task) HasTracer() bool {
+	return t.hasTracer()
+}
+
 // ptraceStop is a TaskStop placed on tasks in a ptrace-stop.
 //
 // +stateify savable

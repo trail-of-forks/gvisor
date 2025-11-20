@@ -255,7 +255,10 @@ void __export_sighandler(int signo, siginfo_t *siginfo, void *_ucontext) {
       // If a syscall instruction set is "mov sysno, %eax, syscall", it can be
       // replaced on a function call which works much faster.
       // Look at pkg/sentry/usertrap for more details.
+      // Skip patching if the task is being ptraced (e.g., gdb/lldb debugging)
+      // as syscall patching breaks ptrace-based debuggers. See issues #12266 and #11649.
       if (__export_disable_syscall_patching == 0 &&
+          ctx->is_traced == 0 &&
           siginfo->si_arch == AUDIT_ARCH_X86_64) {
         uint8_t *rip = (uint8_t *)ctx->ptregs.rip;
         // FIXME(b/144063246): Even if all five bytes before the syscall
